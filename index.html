@@ -1,1 +1,9 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pine Ridge | Volunteer Hub 2.0</title><link rel="stylesheet" href="./src/styles.css"></head><body><div id="app"><p>Loading Volunteer Hub…</p></div><script type="module" src="./src/main.js"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pine Ridge | Volunteer Hub 2.0</title><link rel="stylesheet" href="./src/styles.css"></head><body><div id="app"><p>Loading Volunteer Hub…</p></div><script>
+window.__hubStarted=false;
+window.addEventListener('error',function(e){
+  if(!window.__hubStarted){document.getElementById('app').innerHTML='<main style="font:16px system-ui;max-width:700px;margin:10vh auto;padding:24px"><h1>Volunteer Hub could not start</h1><p>The application failed to load. Check the deployment build and browser console.</p><p style="color:#a00;overflow-wrap:anywhere"></p></main>';document.querySelector('#app p:last-child').textContent=e.message||'Unknown startup error';}
+});
+window.addEventListener('unhandledrejection',function(e){
+  if(!window.__hubStarted){document.getElementById('app').innerHTML='<main style="font:16px system-ui;max-width:700px;margin:10vh auto;padding:24px"><h1>Volunteer Hub could not start</h1><p>Startup failed. Check the browser console.</p></main>'; }
+});
+</script><script type="module" src="/src/main.js"></script></body></html>

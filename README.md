@@ -1,20 +1,18 @@
-# Friends of Pine Ridge — Volunteer Hub 2.0 (initial clean rebuild)
+# Friends of Pine Ridge — Volunteer Hub 2.0 (Vite startup fix)
 
-This is a **new modular frontend**. It is not a feature-complete replacement for the existing production app. The original ~1MB HTML is not used.
+This version fixes the indefinite startup screen caused by importing Supabase from an external CDN at runtime. Supabase is now an npm dependency bundled by Vite during deployment. The original database and RLS are unchanged.
 
-## Run locally
+## GitHub → Vercel deployment
 
-From this folder: `python -m http.server 8080`, then visit http://localhost:8080. The app imports the Supabase JS client from esm.sh, so an internet connection is needed. Deploy this entire folder (not only index.html) to a **new Vercel staging deployment** with framework preset "Other" and output directory `.`.
+1. Upload **the contents of this folder** to the root of your GitHub repository, replacing the previous initial rebuild. Keep `package.json`, `index.html`, `src/` and `vercel.json` at the repository root.
+2. In Vercel, select **Framework Preset: Vite**. **Root Directory:** repository root (`./`). **Build Command:** `npm run build`. **Output Directory:** `dist`. **Install Command:** `npm install` (default).
+3. Redeploy staging and check the deployment build log for success. Vercel must run the build; do not serve `index.html` as an unbuilt static file.
+4. Test sign-in, access levels and data reads. Keep production unchanged.
 
-## Existing database
+## Local development
 
-Uses the existing public publishable key and the existing Supabase project. No service-role key is embedded. Does not create or drop any database tables. Uses: `profiles`, `roles`, `user_roles`, `events`, `hazards`, `photos`, `shifts`, `admin_equipment`, `admin_field_crews`, `admin_crew_members`, `admin_announcements`, `admin_branding`, `admin_action_log` and RPC `admin_assign_role`.
+`npm install` then `npm run dev`. To check production build: `npm run build`.
 
-## Important caveats
+## Limitations
 
-- Role resolution queries `user_roles` and `roles` using the signed-in user's session. **RLS must allow these reads**. A denied role lookup fails closed; do not bypass RLS to make the UI appear to work.
-- The `admin_assign_role` function in the previously supplied SQL assumes UUID `roles.id` and `user_roles.role_id`. Verify your actual schema before testing role changes; if the function does not match, role changes will display an error.
-- Event creation, gallery moderation, hazard evidence handling, public guest hazard submission, RSVP, attendance approvals/corrections, password recovery and upload flows are **not yet ported**. They require a verified schema and security workflow before production use.
-- The frontend restricts navigation but **RLS and server-side functions** enforce security. Never put private evidence or medical information in public queries.
-- Changes to the schema or RLS should be applied only after taking a database backup and reviewing SQL.
-- This initial build has been statically checked, **not live tested** with your Supabase project. Keep the current production app unchanged.
+This fixes the loading mechanism, not every application workflow. Supabase operations and RLS have not been live tested. Event creation, gallery moderation, hazard evidence and attendance approvals are not yet ported. No SQL changes required. Never commit a service-role key.

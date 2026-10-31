@@ -1,5 +1,5 @@
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './config.js';
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+import {createClient} from '@supabase/supabase-js';
 export const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 export async function checked(promise){const {data,error}=await promise;if(error)throw error;return data;}
 export async function resolveAccess(user){
