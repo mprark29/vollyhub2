@@ -9,7 +9,7 @@ export async function resolveAccess(user){
  const ids=[...new Set((assignments||[]).map(x=>String(x.role_id)).filter(Boolean))];
  if(!ids.length)return {level:'volunteer',roles:[]};
  const rows=await checked(db.from('roles').select('id,name').in('id',ids));
- const names=(rows||[]).map(x=>`${x.id} ${x.name}`.toLowerCase());
- const level=names.some(x=>/admin|master/.test(x))?'admin':names.some(x=>/manager|staff|coordinator/.test(x))?'staff':'volunteer';
+ const names=(rows||[]).map(x=>String(x.name||'').trim().toLowerCase());
+ const level=names.some(x=>['admin','administrator','master admin','master_admin'].includes(x))?'admin':names.some(x=>['manager','staff','coordinator','group coordinator'].includes(x))?'staff':'volunteer';
  return {level,roles:rows||[]};
 }
