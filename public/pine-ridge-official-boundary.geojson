@@ -1,0 +1,103 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Pine Ridge Conservation Park",
+        "source": "Queensland Government WetlandInfo conservation park KMZ",
+        "source_url": "https://wetlandinfo.detsi.qld.gov.au/resources/wetland-summary/area/conservation-park/kml/conservation-park-pine-ridge.kmz",
+        "boundary_status": "government-published-simplified",
+        "simplification_tolerance_degrees": 1e-05,
+        "usage": "advisory only"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              153.38864,
+              -27.90085
+            ],
+            [
+              153.38866,
+              -27.90067
+            ],
+            [
+              153.3886,
+              -27.90066
+            ],
+            [
+              153.38901,
+              -27.89612
+            ],
+            [
+              153.38887,
+              -27.89323
+            ],
+            [
+              153.39651,
+              -27.89437
+            ],
+            [
+              153.39676,
+              -27.89468
+            ],
+            [
+              153.39541,
+              -27.90186
+            ],
+            [
+              153.39701,
+              -27.9021
+            ],
+            [
+              153.39747,
+              -27.90719
+            ],
+            [
+              153.39518,
+              -27.90685
+            ],
+            [
+              153.39525,
+              -27.90771
+            ],
+            [
+              153.39471,
+              -27.90761
+            ],
+            [
+              153.39357,
+              -27.90747
+            ],
+            [
+              153.39286,
+              -27.90733
+            ],
+            [
+              153.39213,
+              -27.90723
+            ],
+            [
+              153.39228,
+              -27.90643
+            ],
+            [
+              153.38815,
+              -27.90582
+            ],
+            [
+              153.38859,
+              -27.90084
+            ],
+            [
+              153.38864,
+              -27.90085
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
