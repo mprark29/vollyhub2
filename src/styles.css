@@ -32,3 +32,5 @@
 /* Put imagery above the legacy opaque SVG terrain. Zone selection remains available below the map. */
 .map-satellite-raster{z-index:2}
 .map-satellite-raster.visible{opacity:.78}
+
+#park-leaflet-map{z-index:0}.park-map-card .leaflet-container{font-family:inherit}
