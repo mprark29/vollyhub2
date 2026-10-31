@@ -7,8 +7,8 @@ const OFFICIAL_BOUNDARY=[[-27.90085,153.38864],[-27.90067,153.38866],[-27.90066,
 let activeMap=null;
 let stopLocationWatch=null;
 export async function renderParkMap({box,notice,canManage=false,canTrack=false}){
- if(stopLocationWatch){stopLocationWatch();stopLocationWatch=null;}
- if(activeMap){activeMap.remove();activeMap=null;}
+ if(stopLocationWatch){try{stopLocationWatch();}catch(e){console.warn('Previous map GPS cleanup:',e);}stopLocationWatch=null;}
+ if(activeMap){try{activeMap.remove();}catch(e){console.warn('Previous map cleanup:',e);}activeMap=null;}
  box(`<article class="card park-map-card"><div class="section-heading"><div><h2>Pine Ridge Conservation Park — interactive map</h2><p class="muted">Real satellite basemap. Queensland Government WetlandInfo published conservation-park boundary (simplified). GPS status is advisory only.</p></div></div><div class="map-toolbar"><button class="btn secondary" id="map-satellite">Satellite</button><button class="btn secondary" id="map-streets">Street map</button><button class="btn secondary" id="map-center">Return to park</button><button class="btn secondary" id="map-gps">My location</button>${canManage?`<button class="btn secondary" id="map-draw">Draw boundary</button><button class="btn secondary" id="map-finish">Finish boundary</button><button class="btn secondary" id="map-clear">Clear boundary</button><button class="btn secondary" id="map-restore">Restore official boundary</button><button class="btn secondary" id="map-export">Export GeoJSON</button><label class="btn secondary" for="map-import">Import GeoJSON</label><input id="map-import" type="file" accept=".json,.geojson,application/json" hidden><button class="btn secondary" id="map-publish">Save draft to Supabase</button>`:''}${canTrack?'<button class="btn secondary" id="map-watch">Start GPS monitoring</button>':''}<a class="btn secondary" href="https://www.google.com/maps?q=-27.900035,153.392267" target="_blank" rel="noopener noreferrer">Open Google Maps</a></div><div id="park-leaflet-map" role="region" aria-label="Interactive satellite map of the Pine Ridge area" style="height:540px;min-height:380px;border-radius:12px;background:#1c3d2e"></div><p class="muted" id="map-status" aria-live="polite">Satellite imagery loads from Esri World Imagery. Zoom and pan with the map.</p><p id="geofence-status" class="muted" aria-live="polite">Government-published boundary loaded. Simplified within 0.00001 degrees; GPS monitoring is advisory only. No automatic clock-out, staff alerts or location storage.</p><p class="muted">GPS may be inaccurate or unavailable. This is not a lone-worker safety system.</p></article>`);
  const status=document.getElementById('map-status');
  const publishButton=document.getElementById('map-publish');
@@ -32,24 +32,36 @@ export async function renderParkMap({box,notice,canManage=false,canTrack=false})
  let polygon=null,vertices=OFFICIAL_BOUNDARY.map(point=>[...point]),drawing=false,verified=true,watchId=null,watchCleanup=null;
  const pointInside=(lat,lng,pts)=>{let inside=false;for(let i=0,j=pts.length-1;i<pts.length;j=i++){const [yi,xi]=pts[i], [yj,xj]=pts[j];if(((xi>lng)!==(xj>lng))&&(lat<(yj-yi)*(lng-xi)/(xj-xi)+yi))inside=!inside;}return inside;};
  const renderPolygon=()=>{if(polygon)map.removeLayer(polygon);polygon=vertices.length>=2?L.polygon(vertices,{color:verified?'#146f49':'#f59e0b',fillOpacity:.13,dashArray:verified?null:'7 5'}).addTo(map):null;};
- // The built-in government polygon remains available when the database has not been migrated or is offline.
- let databaseStatus='Bundled government boundary (offline fallback)';
- try {
-  const {data,error}=await db.from('park_geofences').select('name,geometry,source_name,revision').eq('status','active').limit(1).maybeSingle();
-  if(error)throw error;
-  if(data?.geometry?.type==='Polygon' && Array.isArray(data.geometry.coordinates?.[0])){
-   const imported=data.geometry.coordinates[0].map(p=>[p[1],p[0]]);
-   if(imported.length>3 && imported.every(p=>p.every(Number.isFinite))){
-    if(imported[0][0]===imported.at(-1)[0]&&imported[0][1]===imported.at(-1)[1])imported.pop();
-    vertices=imported;verified=true;
-    databaseStatus=`Supabase active boundary: ${data.name} (revision ${data.revision}; ${data.source_name})`;
-   }
-  }
- }catch(err){databaseStatus=`Bundled government boundary used; Supabase unavailable (${err.message})`;}
+ // Render the bundled boundary immediately. Never block the map on a database request.
  renderPolygon();
  map.fitBounds(polygon.getBounds(),{padding:[20,20]});
- fenceStatus.textContent=databaseStatus+'. GPS monitoring is advisory only; boundary-edge readings may be uncertain.';
- const stopWatch=()=>{if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}if(canTrack)document.getElementById('map-watch').textContent='Start GPS monitoring';};
+ fenceStatus.textContent='Government-published boundary displayed. Checking Supabase for the active revision…';
+ const mapAtRequest=map;
+ const loadActiveBoundary=async()=>{
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),6500);
+  try{
+   const {data,error}=await db.from('park_geofences')
+    .select('name,geometry,source_name,revision').eq('status','active').limit(1)
+    .abortSignal(controller.signal).maybeSingle();
+   if(error)throw error;
+   if(activeMap!==mapAtRequest||!fenceStatus.isConnected)return;
+   if(data?.geometry?.type==='Polygon' && Array.isArray(data.geometry.coordinates?.[0])){
+    const imported=data.geometry.coordinates[0].map(p=>[p[1],p[0]]);
+    if(imported.length>3 && imported.every(p=>p.every(Number.isFinite))){
+     if(imported[0][0]===imported.at(-1)[0]&&imported[0][1]===imported.at(-1)[1])imported.pop();
+     if(!drawing){vertices=imported;verified=true;renderPolygon();map.fitBounds(polygon.getBounds(),{padding:[20,20]});}
+     fenceStatus.textContent=`Supabase active boundary: ${data.name} (revision ${data.revision}; ${data.source_name}). GPS monitoring is advisory only.`;
+     return;
+    }
+   }
+   fenceStatus.textContent='Bundled government boundary displayed. No active Supabase geofence found.';
+  }catch(err){
+   if(activeMap===mapAtRequest&&fenceStatus.isConnected)fenceStatus.textContent=`Bundled government boundary displayed. Database lookup unavailable or timed out (${err.message}).`;
+  }finally{clearTimeout(timeout);}
+ };
+ void loadActiveBoundary();
+ const stopWatch=()=>{if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}if(canTrack){const button=document.getElementById('map-watch');if(button)button.textContent='Start GPS monitoring';}};
  stopLocationWatch=stopWatch;
  if(canManage)publishButton.onclick=async()=>{
   if(!canManage)return;
