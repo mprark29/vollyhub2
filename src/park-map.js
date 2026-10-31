@@ -48,7 +48,7 @@ export async function renderParkMap({box,notice,canManage=false,canTrack=false})
    const label=L.marker(center,{interactive:false,keyboard:false,icon:L.divIcon({
     className:'workzone-label-marker',
     html:`<span class="workzone-map-label">${safeText(name)}</span>`,
-    iconSize:[0,0],iconAnchor:[0,0]
+    iconSize:[160,44],iconAnchor:[80,22]
    })}).addTo(map);
    l.bindPopup(`<strong>${safeText(name)}</strong>${z.description?`<p>${safeText(z.description)}</p>`:''}`);
    zoneLayers.push(l,label);

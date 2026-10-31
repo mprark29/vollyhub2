@@ -36,8 +36,8 @@
 #park-leaflet-map{z-index:0}.park-map-card .leaflet-container{font-family:inherit}
 
 /* Mobile-friendly, always-visible work-zone identification */
-.workzone-label-marker{background:transparent;border:0;overflow:visible!important}
-.workzone-map-label{display:inline-block;transform:translate(-50%,-50%);max-width:160px;padding:5px 9px;border:2px solid #fff;border-radius:9px;background:rgba(10,65,44,.92);color:#fff;font-size:12px;font-weight:800;line-height:1.25;text-align:center;white-space:normal;overflow-wrap:anywhere;box-shadow:0 2px 9px #0008;pointer-events:none}
+.workzone-label-marker{background:transparent;border:0;overflow:visible!important;display:flex!important;align-items:center;justify-content:center}
+.workzone-map-label{display:block;width:max-content;max-width:160px;min-width:72px;padding:5px 9px;border:2px solid #fff;border-radius:9px;background:rgba(10,65,44,.92);color:#fff;font-size:12px;font-weight:800;line-height:1.25;text-align:center;white-space:normal;overflow-wrap:normal;word-break:normal;box-shadow:0 2px 9px #0008;pointer-events:none}
 .workzone-list-item{width:100%;display:flex;align-items:center;gap:12px;padding:12px 10px;margin:6px 0;border:1px solid #c9d8cf;border-radius:10px;background:transparent;color:inherit;text-align:left;cursor:pointer;min-height:52px}
 .workzone-list-item>span:nth-child(2){flex:1;min-width:0}
 .workzone-list-item small{display:block;opacity:.75;margin-top:3px}
@@ -45,7 +45,7 @@
 .park-map-card .map-toolbar{display:flex;flex-wrap:wrap;gap:8px}
 @media(max-width:640px){
  #park-leaflet-map{height:60dvh!important;min-height:340px!important;max-height:650px}
- .workzone-map-label{font-size:11px;padding:4px 7px;max-width:116px}
+ .workzone-map-label{font-size:11px;padding:4px 7px;max-width:150px}
  .park-map-card .map-toolbar .btn{min-height:44px}
  .park-map-card .leaflet-control-zoom a{width:40px;height:40px;line-height:40px}
 }
