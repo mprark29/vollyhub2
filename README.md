@@ -1,26 +1,19 @@
-# Volunteer Hub 2.0 — consolidated stability release (staging)
+# Volunteer Hub 2.0 — coordinated attendance review update (staging)
 
-A complete Vite project for GitHub/Vercel. Replace the repository contents, preserving `src/`. Build: `npm install && npm run build`; output: `dist`. Do not deploy to production before end-to-end verification.
+Built on the previous stability release. All existing modules are retained.
 
-## Improvements over the previous coordinated update
-- Exact database role-name matching (prevents accidental administrator classification from arbitrary role IDs or substring matches).
-- Administrator-only field-crew mutation controls; staff retain read access.
-- Database write/delete verification: zero updated rows is an error, not a success.
-- Improved form handling after navigation/rerender.
-- Existing workflows preserved: events, volunteer hazards, attendance, gallery submission/moderation, equipment, crews, announcements, roles, branding and audit.
+## Added
+- Staff attendance approvals and rejections backed by the existing `shifts` table, using `approved_hours`, `verified_by`, and `status`.
+- Prevents reviewing shifts that have not ended and rejects invalid approval hours.
+- Uses conditional database updates to prevent overwriting an already reviewed shift.
+- Complete recent attendance history (up to 300 rows) including approved hours.
+- Role assignment UI reloads after a successful database response.
 
-## Not yet migrated / prerequisites
-- Gallery bucket name `volunteer-gallery` and corresponding storage RLS **must be checked** against your existing Supabase project. Do not create a public bucket.
-- Shift columns, events/hazards columns and RLS must match the existing schema.
-- Guest hazard Edge Function, volunteer hazard evidence, approved public gallery, timesheet approvals and historical corrections are **not implemented in this build**.
-- Database role names must be one of: admin, administrator, master admin, master_admin, manager, staff, coordinator, group coordinator. If yours differ, update the exact allowlist in `src/db.js` after checking your `roles` table.
-- No new SQL is required by this release; no Supabase records are deleted or migrated.
+## Requirements / limitations
+- This reuses the existing Phase 7 shift approval schema and RLS guard. It requires staff update permission and the existing guard trigger. **Do not loosen RLS** if approval fails.
+- This has not been live-tested against the user's Supabase database.
+- Historical attendance corrections, guest hazards, photo storage reconciliation and public gallery are still outstanding.
+- No SQL changes included. Keep production unchanged; deploy to staging and test with staff and volunteer accounts.
 
-## Smoke test
-1. Login with admin, staff and volunteer accounts. Verify sidebar permissions.
-2. Create an equipment item, refresh, and verify persistence. Test edits and deletes.
-3. Test crew creation and assignment as admin; confirm staff cannot mutate.
-4. Create an event, submit a hazard, clock in/out, and reload each.
-5. Check gallery bucket configuration before testing uploads.
-6. Test role assignments and audit records.
-7. Check Vercel build logs and browser console for failures.
+## Deploy
+Upload the entire project to GitHub, preserving the src folder. Vercel preset Vite, build `npm run build`, output `dist`.
