@@ -1,0 +1,1 @@
+Satellite overlay v2: raster rendered as a positioned HTML background above the opaque legacy SVG terrain, rather than as an SVG <image>. Image preload and explicit load failure feedback. The image is a fixed Esri export and not a georeferenced slippy map. Staging only; live imagery availability not verified. No SQL changes.
