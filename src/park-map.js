@@ -36,7 +36,33 @@ export async function renderParkMap({box,notice,canManage=false,canTrack=false})
  let zones=[],zoneLayers=[],zoneDraft=[],zoneDrawing=false,zoneDraftLayer=null,lastZoneStatus='',lastFenceStatus='';
  const zoneValid=(z)=>z?.geometry?.type==='Polygon'&&validRing(z.geometry.coordinates?.[0]);
  const zonePoints=(z)=>z.geometry.coordinates[0].map(p=>[p[1],p[0]]);
- const drawZones=()=>{zoneLayers.forEach(l=>map.removeLayer(l));zoneLayers=[];for(const z of zones){if(!zoneValid(z))continue;const l=L.polygon(zonePoints(z),{color:z.color||'#0077cc',fillOpacity:.15,weight:2}).addTo(map);l.bindTooltip(safeText(z.name));zoneLayers.push(l);}zoneList.innerHTML=zones.map(z=>`<p><strong>${safeText(z.name)}</strong> — ${safeText(z.description||'Active work zone')}</p>`).join('')||'<p class="muted">No active work zones published yet.</p>';};
+ const zoneColor=(value)=>/^#[0-9a-fA-F]{6}$/.test(value||'')?value:'#147d69';
+ const drawZones=()=>{
+  zoneLayers.forEach(l=>map.removeLayer(l));zoneLayers=[];
+  for(const z of zones){
+   if(!zoneValid(z))continue;
+   const color=zoneColor(z.color),name=String(z.name||'Unnamed zone');
+   const l=L.polygon(zonePoints(z),{color,fillColor:color,fillOpacity:.20,weight:3}).addTo(map);
+   // Permanent zone names remain visible on touchscreens, without hovering.
+   const center=l.getBounds().getCenter();
+   const label=L.marker(center,{interactive:false,keyboard:false,icon:L.divIcon({
+    className:'workzone-label-marker',
+    html:`<span class="workzone-map-label">${safeText(name)}</span>`,
+    iconSize:[0,0],iconAnchor:[0,0]
+   })}).addTo(map);
+   l.bindPopup(`<strong>${safeText(name)}</strong>${z.description?`<p>${safeText(z.description)}</p>`:''}`);
+   zoneLayers.push(l,label);
+  }
+  zoneList.innerHTML=zones.map((z,i)=>`<button type="button" class="workzone-list-item" data-zone-index="${i}"><span class="workzone-swatch" style="background:${zoneColor(z.color)}"></span><span><strong>${safeText(z.name)}</strong><small>${safeText(z.description||'Tap to find on map')}</small></span><span aria-hidden="true">⌖</span></button>`).join('')||'<p class="muted">No active work zones published yet.</p>';
+  zoneList.querySelectorAll('[data-zone-index]').forEach(b=>b.onclick=()=>{
+   const z=zones[Number(b.dataset.zoneIndex)];if(!z||!zoneValid(z))return;
+   const bounds=L.latLngBounds(zonePoints(z));map.fitBounds(bounds,{padding:[36,36],maxZoom:18});
+   const polygon=zoneLayers.find(l=>l instanceof L.Polygon&&l.getBounds().equals(bounds));
+   if(polygon)polygon.openPopup();
+   document.getElementById('park-leaflet-map')?.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+ };
+
  const loadZones=async()=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6500);try{const {data,error}=await db.from('park_work_zones').select('id,name,description,geometry,color,status').eq('status','active').abortSignal(controller.signal).limit(100);if(error)throw error;if(activeMap!==map||!zoneStatus.isConnected)return;zones=(data||[]).filter(zoneValid);drawZones();zoneStatus.textContent=`${zones.length} active work zone(s) loaded from Supabase.`;}catch(e){if(activeMap===map&&zoneStatus.isConnected)zoneStatus.textContent=`Work zones unavailable: ${e.message}. Apply the work-zones SQL migration.`;}finally{clearTimeout(timer);}};
  void loadZones();
  const loadAdminZones=async()=>{if(!canManage)return;const panel=document.getElementById('workzone-admin');if(!panel)return;const {data,error}=await db.from('park_work_zones').select('id,name,status,created_at').order('created_at',{ascending:false}).limit(50);if(error){panel.textContent=`Zone management unavailable: ${error.message}`;return;}panel.innerHTML='<h4>Administrator: work-zone approvals</h4>'+(data||[]).map(z=>`<div class="map-zone-admin-row"><strong>${safeText(z.name)}</strong> (${safeText(z.status)}) <button class="btn secondary" data-zone-id="${safeText(z.id)}" data-zone-action="${z.status==='active'?'retired':'active'}">${z.status==='active'?'Retire':'Activate'}</button></div>`).join('');panel.querySelectorAll('[data-zone-action]').forEach(b=>{b.onclick=async()=>{b.disabled=true;try{const {error}=await db.rpc('set_park_work_zone_status',{p_id:b.dataset.zoneId,p_status:b.dataset.zoneAction});if(error)throw error;zoneStatus.textContent='Work-zone status updated.';await Promise.all([loadZones(),loadAdminZones()]);}catch(e){zoneStatus.textContent=`Zone update failed: ${e.message}`;b.disabled=false;}};});};
