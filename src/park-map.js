@@ -37,28 +37,30 @@ export async function renderParkMap({box,notice,canManage=false,canTrack=false})
  const zoneValid=(z)=>z?.geometry?.type==='Polygon'&&validRing(z.geometry.coordinates?.[0]);
  const zonePoints=(z)=>z.geometry.coordinates[0].map(p=>[p[1],p[0]]);
  const zoneColor=(value)=>/^#[0-9a-fA-F]{6}$/.test(value||'')?value:'#147d69';
+ // Compact, constant-pixel-size markers avoid overlapping long labels on mobile.
+ // The zone list provides the full names, including when markers are close together.
  const drawZones=()=>{
   zoneLayers.forEach(l=>map.removeLayer(l));zoneLayers=[];
-  for(const z of zones){
-   if(!zoneValid(z))continue;
+  const rendered=[];
+  zones.forEach((z,i)=>{
+   if(!zoneValid(z))return;
    const color=zoneColor(z.color),name=String(z.name||'Unnamed zone');
-   const l=L.polygon(zonePoints(z),{color,fillColor:color,fillOpacity:.20,weight:3}).addTo(map);
-   // Permanent zone names remain visible on touchscreens, without hovering.
+   const l=L.polygon(zonePoints(z),{color,fillColor:color,fillOpacity:.16,weight:3}).addTo(map);
    const center=l.getBounds().getCenter();
-   const label=L.marker(center,{interactive:false,keyboard:false,icon:L.divIcon({
-    className:'workzone-label-marker',
-    html:`<span class="workzone-map-label">${safeText(name)}</span>`,
-    iconSize:[160,44],iconAnchor:[80,22]
+   const marker=L.marker(center,{keyboard:true,title:`Zone ${i+1}: ${name}`,icon:L.divIcon({
+    className:'workzone-number-marker',
+    html:`<span class="workzone-number" style="--zone-color:${color}" aria-hidden="true">${i+1}</span>`,
+    iconSize:[32,32],iconAnchor:[16,16]
    })}).addTo(map);
-   l.bindPopup(`<strong>${safeText(name)}</strong>${z.description?`<p>${safeText(z.description)}</p>`:''}`);
-   zoneLayers.push(l,label);
-  }
-  zoneList.innerHTML=zones.map((z,i)=>`<button type="button" class="workzone-list-item" data-zone-index="${i}"><span class="workzone-swatch" style="background:${zoneColor(z.color)}"></span><span><strong>${safeText(z.name)}</strong><small>${safeText(z.description||'Tap to find on map')}</small></span><span aria-hidden="true">⌖</span></button>`).join('')||'<p class="muted">No active work zones published yet.</p>';
-  zoneList.querySelectorAll('[data-zone-index]').forEach(b=>b.onclick=()=>{
-   const z=zones[Number(b.dataset.zoneIndex)];if(!z||!zoneValid(z))return;
-   const bounds=L.latLngBounds(zonePoints(z));map.fitBounds(bounds,{padding:[36,36],maxZoom:18});
-   const polygon=zoneLayers.find(l=>l instanceof L.Polygon&&l.getBounds().equals(bounds));
-   if(polygon)polygon.openPopup();
+   const detail=`<strong>Zone ${i+1}: ${safeText(name)}</strong>${z.description?`<p>${safeText(z.description)}</p>`:''}`;
+   l.bindPopup(detail);marker.bindPopup(detail);
+   zoneLayers.push(l,marker);rendered.push({zone:z,index:i,polygon:l,marker});
+  });
+  zoneList.innerHTML=rendered.map(({zone:z,index:i})=>`<button type="button" class="workzone-list-item" data-zone-index="${i}" aria-label="Locate zone ${i+1}: ${safeText(z.name)}"><span class="workzone-legend-number" style="--zone-color:${zoneColor(z.color)}">${i+1}</span><span><strong>${safeText(z.name)}</strong><small>${safeText(z.description||'Tap to find on map')}</small></span><span aria-hidden="true">⌖</span></button>`).join('')||'<p class="muted">No active work zones published yet.</p>';
+  zoneList.querySelectorAll('[data-zone-index]').forEach(button=>button.onclick=()=>{
+   const entry=rendered.find(item=>item.index===Number(button.dataset.zoneIndex));if(!entry)return;
+   map.fitBounds(entry.polygon.getBounds(),{padding:[40,40],maxZoom:17});
+   entry.marker.openPopup();
    document.getElementById('park-leaflet-map')?.scrollIntoView({behavior:'smooth',block:'center'});
   });
  };

@@ -49,3 +49,10 @@
  .park-map-card .map-toolbar .btn{min-height:44px}
  .park-map-card .leaflet-control-zoom a{width:40px;height:40px;line-height:40px}
 }
+
+/* Map markers are screen-space (fixed pixel size), not scaled with map zoom. */
+.workzone-number-marker{background:transparent;border:0}
+.workzone-number,.workzone-legend-number{display:flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;border-radius:50%;background:var(--zone-color,#147d69);border:2px solid #fff;box-shadow:0 1px 6px #0009;color:#fff;font-size:14px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.workzone-legend-number{width:34px;height:34px}
+.workzone-list-item{min-height:54px}
+@media(max-width:640px){.workzone-number{width:30px;height:30px;font-size:13px}.workzone-list-item{min-height:56px}}
