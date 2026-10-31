@@ -46,21 +46,18 @@ export async function renderParkMap({box,notice,canManage=false,canTrack=false})
    if(!zoneValid(z))return;
    const color=zoneColor(z.color),name=String(z.name||'Unnamed zone');
    const l=L.polygon(zonePoints(z),{color,fillColor:color,fillOpacity:.16,weight:3}).addTo(map);
-   const center=l.getBounds().getCenter();
-   const marker=L.marker(center,{keyboard:true,title:`Zone ${i+1}: ${name}`,icon:L.divIcon({
-    className:'workzone-number-marker',
-    html:`<span class="workzone-number" style="--zone-color:${color}" aria-hidden="true">${i+1}</span>`,
-    iconSize:[32,32],iconAnchor:[16,16]
-   })}).addTo(map);
    const detail=`<strong>Zone ${i+1}: ${safeText(name)}</strong>${z.description?`<p>${safeText(z.description)}</p>`:''}`;
-   l.bindPopup(detail);marker.bindPopup(detail);
-   zoneLayers.push(l,marker);rendered.push({zone:z,index:i,polygon:l,marker});
+   // The polygon itself is the tap target: no marker or floating label.
+   l.bindPopup(detail,{autoPan:true});
+   l.on('mouseover',()=>l.setStyle({fillOpacity:.30,weight:4}));
+   l.on('mouseout',()=>l.setStyle({fillOpacity:.16,weight:3}));
+   zoneLayers.push(l);rendered.push({zone:z,index:i,polygon:l});
   });
   zoneList.innerHTML=rendered.map(({zone:z,index:i})=>`<button type="button" class="workzone-list-item" data-zone-index="${i}" aria-label="Locate zone ${i+1}: ${safeText(z.name)}"><span class="workzone-legend-number" style="--zone-color:${zoneColor(z.color)}">${i+1}</span><span><strong>${safeText(z.name)}</strong><small>${safeText(z.description||'Tap to find on map')}</small></span><span aria-hidden="true">⌖</span></button>`).join('')||'<p class="muted">No active work zones published yet.</p>';
   zoneList.querySelectorAll('[data-zone-index]').forEach(button=>button.onclick=()=>{
    const entry=rendered.find(item=>item.index===Number(button.dataset.zoneIndex));if(!entry)return;
    map.fitBounds(entry.polygon.getBounds(),{padding:[40,40],maxZoom:17});
-   entry.marker.openPopup();
+   entry.polygon.openPopup();
    document.getElementById('park-leaflet-map')?.scrollIntoView({behavior:'smooth',block:'center'});
   });
  };
