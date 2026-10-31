@@ -1,1 +1,1 @@
-Run supabase/safety_fieldwork.sql. Existing shifts.id and shifts.user_id are text; SQL casts auth.uid() to text for ownership comparison. No changes to existing shifts.
+Fixes PostgreSQL 42804: existing public.shifts.id is TEXT, so volunteer_welfare_checks.shift_id must be TEXT. Run supabase/safety_fieldwork.sql again in Supabase SQL Editor. No change to existing shifts table or data. The previous statement failed during CREATE TABLE and PostgreSQL SQL Editor may have rolled back its transaction; this migration is rerunnable. No database execution was performed here.
