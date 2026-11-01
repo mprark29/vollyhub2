@@ -9,5 +9,5 @@ export async function checkParkPosition(db){
  for(let i=0,j=ring.length-1;i<ring.length;j=i++){
   const [xi,yi]=ring[i], [xj,yj]=ring[j];if(((yi>lat)!==(yj>lat))&&(lng<(xj-xi)*(lat-yi)/(yj-yi)+xi))inside=!inside;
  }
- return {inside,accuracy,message:`GPS suggests ${inside?'INSIDE':'OUTSIDE'} the park boundary (accuracy ±${Math.round(accuracy)} m). ${accuracy>50?'Low accuracy; result is uncertain. ':''}Advisory only. You may clock in regardless; coordinates are not saved.`};
+ return {inside,accuracy,latitude:lat,longitude:lng,message:`GPS suggests ${inside?'INSIDE':'OUTSIDE'} the park boundary (accuracy ±${Math.round(accuracy)} m). ${accuracy>50?'Low accuracy; result is uncertain. ':''}Clock-in is enforced by Supabase; GPS coordinates are transmitted for boundary checks but not stored as coordinates.`};
 }

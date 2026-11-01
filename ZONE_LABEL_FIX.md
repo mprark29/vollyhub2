@@ -1,1 +1,0 @@
-Fix for vertical zone label text: Leaflet divIcon was created with iconSize [0,0], forcing its text into a zero-width box. It now has a 160 x 44 pixel anchor box with centred flex content. Labels wrap at word boundaries rather than splitting each letter. No database migration. Browser verification still required.

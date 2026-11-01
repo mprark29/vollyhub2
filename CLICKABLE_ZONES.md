@@ -1,1 +1,0 @@
-Zone markers removed. Tap or click the coloured polygon itself for zone name and description. The numbered work-zone list below the map remains; selecting a list item zooms to the polygon and opens its popup. No SQL changes. JavaScript syntax checked; browser/touchscreen testing pending.
